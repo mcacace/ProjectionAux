@@ -1,13 +1,19 @@
 [Mesh]
   [cube]
     type = FileMeshGenerator
-    file = 'mesh/cube.e'
+    file = 'mesh/minimal_example.e'
   []
-  [rename_boubdary]
+  [rename_boundary]
     type = RenameBoundaryGenerator
     input = cube
     old_boundary = '1 2 3 4 5 6'
     new_boundary = 'back front right left bottom top'
+  []
+  [rename_blocks]
+    type = RenameBlockGenerator
+    input = rename_boundary
+    old_block = '0 1 2'
+    new_block = 'HD LD1 LD2'
   []
 []
 
@@ -21,6 +27,11 @@
 []
 
 [Kernels]
+  [temp]
+    type = CoefTimeDerivative
+    variable = u
+    Coefficient = 1
+  []
   [diff]
     type = MatDiffusion
     variable = u
@@ -52,26 +63,26 @@
 []
 
 [AuxVariables]
-  [mat_element]
+  [pu_element]
     order = CONSTANT
     family = MONOMIAL
   []
-  [mat_node]
+  [pu_node]
   []
 []
 
 [AuxKernels]
-  [mat_element_aux]
-    type = MaterialRealAux
-    variable = mat_element
-    property = mat
+  [pu_element_aux]
+    type = ProjectionModifiedAux
+    variable = pu_element
+    v = u
     execute_on = 'INITIAL TIMESTEP_END'
   []
-  [mat_node_aux]
-    type = ProjectionAux
-    variable = mat_node
-    v = mat_element
-    execute_on = 'INITIAL TIMESTEP_END'
+  [pu_node_aux]
+    type = ProjectionModifiedAux
+    variable = pu_node
+    v = pu_element
+    execute_on = 'INITIAL NONLINEAR_CONVERGENCE TIMESTEP_END'
   []
 []
 
@@ -95,10 +106,11 @@
   type = Transient
   solve_type = NEWTON
   start_time = 0.0
-  end_time = 1
-  dt = 1
+  end_time = 1e5
+  dt = 1e3
 []
 
 [Outputs]
+  print_linear_residuals = false
   exodus = true
 []
